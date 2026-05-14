@@ -73,11 +73,6 @@ npm run seed
 
 Create a `.env` file inside the `backend/` folder:
 
-```
-PORT=3001
-MONGO_URI=mongodb://localhost:27017/coffeedb
-```
-
 ---
 
 ## 3. Install Dependencies
