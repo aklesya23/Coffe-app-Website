@@ -23,21 +23,23 @@ export function CartProvider({ children }) {
   }, [cart])
 
   const addToCart = (product, quantity = 1) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === product._id)
-      if (existingItem) {
-        return prevCart.map(item =>
-          item.id === product._id
-            ? { ...item, qty: item.qty + quantity }
-            : item
-        )
-      }
-      return [...prevCart, { ...product, qty: quantity }]
-    })
-  }
+  setCart(prevCart => {
+    const productId = product._id || product.id
+    const existingItem = prevCart.find(item => (item._id || item.id) === productId)
+    if (existingItem) {
+      return prevCart.map(item =>
+        (item._id || item.id) === productId
+          ? { ...item, qty: item.qty + quantity }
+          : item
+      )
+    }
+    // Store the product with both possible ID fields
+    return [...prevCart, { ...product, id: productId, _id: productId, qty: quantity }]
+  })
+}
 
   const removeFromCart = (productId) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== productId))
+    setCart(prevCart => prevCart.filter(item => (item._id || item.id) !== productId))
   }
 
   const updateQty = (productId, newQty) => {
