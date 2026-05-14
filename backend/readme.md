@@ -1,199 +1,210 @@
-# Coffee Shop — Frontend ↔ Backend Integration Guide
+# ☕ Coffee Shop — MERN Stack
 
-## 1. Start the backend
+A full-stack coffee shop web app built with **MongoDB, Express, React, and Node.js**.
+
+---
+
+## Project Structure
+
+```
+Coffe-app Website/
+├── backend/                  ← Express + MongoDB API
+│   ├── src/
+│   │   ├── config/
+│   │   │   ├── db.js         ← MongoDB connection
+│   │   │   └── seed.js       ← Optional: seed products via code
+│   │   ├── models/
+│   │   │   ├── Product.js    ← Mongoose Product schema
+│   │   │   └── Order.js      ← Mongoose Order schema
+│   │   ├── routes/
+│   │   │   ├── products.js   ← GET /api/products, GET /api/products/:id
+│   │   │   └── orders.js     ← POST /api/orders, GET /api/orders
+│   │   └── server.js         ← App entry point
+│   ├── .env                  ← Environment variables (never commit this)
+│   ├── .gitignore
+│   └── package.json
+│
+└── frontend/
+    └── coffe-app/            ← React + Vite frontend
+        ├── src/
+        │   ├── components/   ← Navbar, ProductCard, SearchBar, etc.
+        │   ├── context/      ← CartContext, CacheContext
+        │   ├── pages/        ← Home, Cart, Checkout, Orders, ProductDetails
+        │   ├── services/
+        │   │   └── api.js    ← All fetch calls to the backend
+        │   └── App.jsx
+        └── package.json
+```
+
+---
+
+## Prerequisites
+
+Make sure you have these installed before starting:
+
+- [Node.js](https://nodejs.org) v18 or higher — check with `node -v`
+- [MongoDB Community Edition](https://www.mongodb.com/try/download/community) — running locally
+- [MongoDB Compass](https://www.mongodb.com/try/download/compass) — optional but recommended for viewing data
+
+---
+
+## 1. Set Up MongoDB
+
+### Option A — MongoDB Compass (recommended)
+
+1. Open MongoDB Compass
+2. Connect using: `mongodb://localhost:27017`
+3. Click **Create Database**
+   - Database name: `coffeedb`
+   - Collection name: `products`
+4. Create a second collection inside `coffeedb` called `orders`
+5. Click into `products` → **Add Data** → **Insert Document** and add your products manually
+
+### Option B — npm run seed (inserts 10 products automatically)
 
 ```bash
-# In the coffee-backend folder:
+cd backend
+npm run seed
+```
+
+---
+
+## 2. Configure Environment Variables
+
+Create a `.env` file inside the `backend/` folder:
+
+```
+PORT=3001
+MONGO_URI=mongodb://localhost:27017/coffeedb
+```
+
+---
+
+## 3. Install Dependencies
+
+**Backend:**
+```bash
+cd backend
 npm install
-npm run dev   # runs on http://localhost:3001
+```
+
+**Frontend:**
+```bash
+cd frontend/coffe-app
+npm install
 ```
 
 ---
 
-## 2. Add api.js to the frontend
+## 4. Run the App
 
-Copy `src/services/api.js` into `coffe-app/src/services/api.js`.
+You need two terminals open at the same time.
+
+**Terminal 1 — Backend:**
+```bash
+cd backend
+npm run dev
+```
+
+You should see:
+```
+✅ MongoDB connected: localhost
+☕ Coffee Shop API running on http://localhost:3001
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd frontend/coffe-app
+npm run dev
+```
+
+You should see:
+```
+VITE ready on http://localhost:5173
+```
+
+Open your browser at **http://localhost:5173**
 
 ---
 
-## 3. Update Checkout.jsx — replace localStorage with real API
+## 5. API Endpoints
 
-**Before (current code):**
-```js
-// Checkout.jsx handleSubmit
-const orders = JSON.parse(localStorage.getItem('orders')) || []
-orders.unshift({ id: Date.now(), date: ..., customer: form, items: cart, total })
-localStorage.setItem('orders', JSON.stringify(orders))
-clearCart()
-setOrderComplete(true)
-```
+Base URL: `http://localhost:3001`
 
-**After (with backend):**
-```js
-import { ordersAPI } from '../services/api'
-
-const handleSubmit = async (e) => {
-  e.preventDefault()
-  if (!validateForm()) return
-  setSubmitting(true)
-  try {
-    // Send order to the backend
-    await ordersAPI.place({
-      customer: form,
-      items: cart.map(item => ({ id: item.id, qty: item.qty })),
-    })
-    clearCart()
-    setOrderComplete(true)
-  } catch (err) {
-    // Show the error from the server (e.g. "Not enough stock")
-    setErrors({ submit: err.message })
-  } finally {
-    setSubmitting(false)
-  }
-}
-```
-
----
-
-## 4. Update Orders.jsx — replace localStorage with API
-
-**Before:**
-```js
-useEffect(() => {
-  const savedOrders = localStorage.getItem('orders')
-  if (savedOrders) setOrders(JSON.parse(savedOrders))
-}, [])
-```
-
-**After:**
-```js
-import { ordersAPI } from '../services/api'
-
-useEffect(() => {
-  ordersAPI.getAll()
-    .then(setOrders)
-    .catch(err => console.error('Failed to load orders:', err))
-}, [])
-```
-
----
-
-## 5. Update Home.jsx — fetch products from API
-
-**Before:**
-```js
-import { products as localProducts, categories } from '../data/products'
-// ...
-setProducts(localProducts)
-```
-
-**After:**
-```js
-import { productsAPI } from '../services/api'
-
-const loadProducts = async () => {
-  setLoading(true)
-  const cached = getCachedProducts()
-  if (cached) { setProducts(cached); setLoading(false); return }
-  
-  const { products, categories: cats } = await productsAPI.getAll()
-  setProducts(products)
-  setCategories(cats)          // add useState for categories
-  setCachedProducts(products)
-  setLoading(false)
-}
-```
-
-Also pass `category` and `search` directly to the API instead of filtering client-side:
-```js
-const { products } = await productsAPI.getAll({ category: selectedCategory, search: searchTerm })
-```
-
----
-
-## 6. Update SearchBar — add live suggestions
-
-```js
-import { searchAPI } from '../services/api'
-import { useState } from 'react'
-
-export default function SearchBar({ searchTerm, onSearch }) {
-  const [suggestions, setSuggestions] = useState([])
-
-  const handleChange = async (e) => {
-    const val = e.target.value
-    onSearch(val)
-    if (val.length >= 2) {
-      const results = await searchAPI.getSuggestions(val)
-      setSuggestions(results)
-    } else {
-      setSuggestions([])
-    }
-  }
-
-  return (
-    <div style={{ position: 'relative' }}>
-      <input value={searchTerm} onChange={handleChange} placeholder="Search..." />
-      {suggestions.length > 0 && (
-        <ul className="suggestions-dropdown">
-          {suggestions.map(s => (
-            <li key={s.id} onClick={() => { onSearch(s.name); setSuggestions([]) }}>
-              {s.name} — ${s.price}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
-```
-
----
-
-## 7. ProductDetails.jsx — fetch from API
-
-**Before:**
-```js
-const product = products.find(p => p.id === parseInt(id))
-```
-
-**After:**
-```js
-import { productsAPI } from '../services/api'
-
-const [product, setProduct] = useState(null)
-useEffect(() => {
-  productsAPI.getById(id)
-    .then(setProduct)
-    .catch(() => setProduct(null))
-}, [id])
-```
-
----
-
-## API Reference
-
-| Method | URL | What it does |
-|--------|-----|--------------|
-| GET | `/api/products` | Get all products (supports `?category=&search=&sort=`) |
-| GET | `/api/products/:id` | Get one product |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/products` | Get all products |
+| GET | `/api/products?category=Coffee` | Filter by category |
+| GET | `/api/products?search=yirg` | Search products |
+| GET | `/api/products/:id` | Get one product by ID |
 | POST | `/api/orders` | Place a new order |
 | GET | `/api/orders` | Get all orders |
-| GET | `/api/search/suggestions?q=` | Live search suggestions |
-| GET | `/api/search/recent/:userId` | Get recent searches |
-| POST | `/api/search/recent/:userId` | Save a recent search |
-| POST | `/api/auth/login` | Login |
-| POST | `/api/auth/register` | Create account |
-| GET | `/api/auth/me` | Get current user |
+| GET | `/api/orders/:id` | Get one order by ID |
+| PATCH | `/api/orders/:id/status` | Update order status |
+| GET | `/api/health` | Check if server is running |
+
+### Example — Place an Order
+
+```json
+POST /api/orders
+{
+  "customer": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "address": "123 Main St, Addis Ababa"
+  },
+  "items": [
+    { "id": "<mongodb_product_id>", "qty": 2 }
+  ]
+}
+```
 
 ---
 
-## Upgrade path (after school project)
+## 6. How the Frontend Connects to the Backend
 
-| Current | Production upgrade |
-|---|---|
-| In-memory arrays | PostgreSQL / MongoDB |
-| Plaintext passwords | `bcrypt` password hashing |
-| Manual token strings | JWT or express-session |
-| No HTTPS | Deploy to Railway / Render with SSL |
-| Single server file | Add proper MVC controllers |
+All API calls go through `frontend/coffe-app/src/services/api.js`.
+
+```js
+// Fetch all products
+const { products } = await productsAPI.getAll()
+
+// Fetch one product
+const product = await productsAPI.getById(id)
+
+// Place an order
+await ordersAPI.place({ customer, items })
+
+// Get order history
+const orders = await ordersAPI.getAll()
+```
+
+---
+
+## 7. Common Issues
+
+**MongoDB not connecting**
+- Make sure MongoDB is running. On Windows open Services and check that MongoDB is started, or run `mongod` in a terminal.
+
+**CORS error in browser**
+- Make sure the backend is running on port 3001 and the frontend on port 5173. The backend is configured to allow only `http://localhost:5173`.
+
+**Products not showing**
+- Visit `http://localhost:3001/api/products` in your browser. If you see an empty array `[]`, you haven't inserted products yet — go to Compass and add them.
+
+**Port already in use**
+- Another process is using port 3001. Either stop it or change `PORT` in your `.env` file.
+
+---
+
+## 8. Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Database | MongoDB |
+| ODM | Mongoose |
+| Backend | Node.js + Express |
+| Frontend | React + Vite |
+| Styling | CSS (App.css) |
+| Routing | React Router |
+| State | React Context API |
