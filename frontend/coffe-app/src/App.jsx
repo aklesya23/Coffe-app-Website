@@ -6,6 +6,7 @@ import ProductDetails from './pages/ProductDetails'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import Orders from './pages/Orders'
+import Navbar from './components/Navbar'
 import './App.css'
 
 function App() {
@@ -14,16 +15,7 @@ function App() {
       <CartProvider>
         <Router>
           <div className="app">
-            <nav className="navbar">
-              <div className="nav-container">
-                <Link to="/" className="nav-logo">Coffe shop</Link>
-                <div className="nav-links">
-                  <Link to="/" className="nav-link">Home</Link>
-                  <Link to="/cart" className="nav-link">Cart</Link>
-                  <Link to="/orders" className="nav-link">Orders</Link>
-                </div>
-              </div>
-            </nav>
+            <Navbar/>
             <main className="main-content">
               <Routes>
                 <Route path="/" element={<Home />} />
