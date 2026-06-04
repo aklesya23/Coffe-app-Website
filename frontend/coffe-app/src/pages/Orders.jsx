@@ -4,13 +4,55 @@ import { ordersAPI } from '../services/api'
 
 export default function Orders() {
   const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    ordersAPI.getAll()
-      .then(setOrders)
-      .catch(err => console.error('Failed to load orders:', err))
+    const loadOrders = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const data = await ordersAPI.getAll()
+        setOrders(data)
+      } catch (err) {
+        console.error('Failed to load orders:', err)
+        setError(err.message || 'Failed to load your orders. Please try again later.')
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    loadOrders()
   }, [])
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading your orders...</p>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="error-container">
+        <div className="error-icon">⚠️</div>
+        <h2>Something went wrong</h2>
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()} className="btn-primary">
+          Try Again
+        </button>
+        <Link to="/" className="btn-secondary" style={{ marginLeft: '1rem' }}>
+          Return to Shop
+        </Link>
+      </div>
+    )
+  }
   
+  // Empty state
   if (orders.length === 0) {
     return (
       <div className="empty-orders">
@@ -22,6 +64,7 @@ export default function Orders() {
     )
   }
   
+  // Orders list
   return (
     <div className="orders-container">
       <h1>Order History</h1>
