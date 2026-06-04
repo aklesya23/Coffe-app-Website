@@ -6,6 +6,7 @@ const PRODUCTS_CACHE_KEY = 'cached_products'
 const CACHE_TIMESTAMP_KEY = 'products_cache_timestamp'
 const CACHE_DURATION = 5 * 60 * 1000
 const SEARCH_HISTORY_KEY = 'search_history'
+const CATEGORIES_CACHE_KEY = 'cached_categories'
 
 export function CacheProvider({ children }) {
   const [recentSearches, setRecentSearches] = useState([])
@@ -38,10 +39,21 @@ export function CacheProvider({ children }) {
     })
   }
 
+  const clearRecentSearches = () => {
+    setRecentSearches([])
+    localStorage.removeItem(SEARCH_HISTORY_KEY)
+  }
+
   const updateFilterCache = (type, value) => {
     const newCache = { ...filterCache, [type]: value }
     setFilterCache(newCache)
     sessionStorage.setItem('filter_cache', JSON.stringify(newCache))
+  }
+
+  const resetFilterCache = () => {
+    const newCache = { category: '', search: '' }
+    setFilterCache(newCache)
+    sessionStorage.removeItem('filter_cache')
   }
 
   const getCachedProducts = () => {
@@ -68,15 +80,28 @@ export function CacheProvider({ children }) {
     return Date.now() - parseInt(timestamp) < CACHE_DURATION
   }
 
+  const getCachedCategories = () => {
+    const cached = localStorage.getItem(CATEGORIES_CACHE_KEY)
+    return cached ? JSON.parse(cached) : null
+  }
+
+  const setCachedCategories = (categories) => {
+    localStorage.setItem(CATEGORIES_CACHE_KEY, JSON.stringify(categories))
+  }
+
   return (
     <CacheContext.Provider value={{
       recentSearches,
       addRecentSearch,
+      clearRecentSearches,
       filterCache,
       updateFilterCache,
+      resetFilterCache,
       getCachedProducts,
       setCachedProducts,
-      isCacheValid
+      isCacheValid,
+      getCachedCategories,
+      setCachedCategories
     }}>
       {children}
     </CacheContext.Provider>

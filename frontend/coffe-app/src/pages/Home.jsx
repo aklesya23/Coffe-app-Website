@@ -18,7 +18,7 @@ export default function Home() {
   const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
-  const { getCachedProducts, setCachedProducts, filterCache, updateFilterCache, addRecentSearch } = useCache()
+  const { getCachedProducts, setCachedProducts, getCachedCategories, setCachedCategories, filterCache, updateFilterCache, addRecentSearch } = useCache()
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -27,16 +27,22 @@ export default function Home() {
       try {
         // Try cache first
         const cached = getCachedProducts()
-        if (cached) {
+        const cachedCategories = getCachedCategories()
+        
+        if (cached && cachedCategories) {
           setProducts(cached)
+          setCategories(cachedCategories)
           setLoading(false)
           return
         }
+        
         // Fetch from MongoDB via API
         const { products: fetched, categories: cats } = await productsAPI.getAll()
         setProducts(fetched)
-        setCategories(cats || ['All'])
+        const categoryList = cats || ['All']
+        setCategories(categoryList)
         setCachedProducts(fetched)
+        setCachedCategories(categoryList)
       } catch (err) {
         setError('Failed to load products. Is the backend running?')
         console.error(err)
