@@ -57,17 +57,18 @@ export function CacheProvider({ children }) {
   }
 
   const getCachedProducts = () => {
-    const cached = localStorage.getItem(PRODUCTS_CACHE_KEY)
-    const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY)
-    
-    if (cached && timestamp) {
-      const now = Date.now()
-      if (now - parseInt(timestamp) < CACHE_DURATION) {
-        return JSON.parse(cached)
-      }
+  const cached = localStorage.getItem(PRODUCTS_CACHE_KEY)
+  const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY)
+
+  if (cached && timestamp) {
+    const now = Date.now()
+    if (now - parseInt(timestamp) < CACHE_DURATION) {
+      const parsed = JSON.parse(cached)
+      if (parsed && parsed.length > 0) return parsed  // ← add this check
     }
-    return null
   }
+  return null
+}
 
   const setCachedProducts = (products) => {
     localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(products))
