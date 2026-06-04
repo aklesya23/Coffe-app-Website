@@ -23,20 +23,20 @@ export function CartProvider({ children }) {
   }, [cart])
 
   const addToCart = (product, quantity = 1) => {
-  setCart(prevCart => {
-    const productId = product._id || product.id
-    const existingItem = prevCart.find(item => (item._id || item.id) === productId)
-    if (existingItem) {
-      return prevCart.map(item =>
-        (item._id || item.id) === productId
-          ? { ...item, qty: item.qty + quantity }
-          : item
-      )
-    }
-    // Store the product with both possible ID fields
-    return [...prevCart, { ...product, id: productId, _id: productId, qty: quantity }]
-  })
-}
+    setCart(prevCart => {
+      const productId = product._id || product.id
+      const existingItem = prevCart.find(item => (item._id || item.id) === productId)
+      if (existingItem) {
+        return prevCart.map(item =>
+          (item._id || item.id) === productId
+            ? { ...item, qty: item.qty + quantity }
+            : item
+        )
+      }
+      // Store the product with both possible ID fields
+      return [...prevCart, { ...product, id: productId, _id: productId, qty: quantity }]
+    })
+  }
 
   const removeFromCart = (productId) => {
     setCart(prevCart => prevCart.filter(item => (item._id || item.id) !== productId))
@@ -49,7 +49,7 @@ export function CartProvider({ children }) {
     }
     setCart(prevCart =>
       prevCart.map(item =>
-        item.id === productId ? { ...item, qty: newQty } : item
+        (item._id || item.id) === productId ? { ...item, qty: newQty } : item
       )
     )
   }
