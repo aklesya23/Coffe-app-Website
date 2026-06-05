@@ -3,7 +3,6 @@ import { productsDB } from '../models/db.js'
 
 export const searchRouter = Router()
 
-// Shared recent searches store (in real app: per-user in DB)
 const recentSearchesStore = {}
 
 // GET /api/search/suggestions?q=colo

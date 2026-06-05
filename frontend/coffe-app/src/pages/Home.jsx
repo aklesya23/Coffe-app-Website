@@ -1,6 +1,4 @@
-// coffe-app/src/pages/Home.jsx
-// REPLACE your current Home.jsx with this.
-// Key change: products come from MongoDB via API, not local data/products.js
+//products come from MongoDB via API
 
 import { useEffect, useState } from 'react'
 import { useCache } from '../context/CacheContext'
