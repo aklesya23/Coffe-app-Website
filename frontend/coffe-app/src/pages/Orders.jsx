@@ -53,10 +53,17 @@ export default function Orders() {
   }
   
   // Empty state
+    ordersAPI.getAll()
+      .then(setOrders)
+      .catch(err => console.error('Failed to load orders:', err))
+  }, [])
+
   if (orders.length === 0) {
     return (
       <div className="empty-orders">
-        <div className="empty-icon">📦</div>
+        <div className="empty-icon">
+          <img src="/icons/orders.svg" alt="No orders" width="64" height="64" />
+        </div>
         <h2>No Orders Yet</h2>
         <p>You haven't placed any orders. Start shopping to see your orders here!</p>
         <Link to="/" className="btn-primary">Start Shopping</Link>
@@ -65,6 +72,7 @@ export default function Orders() {
   }
   
   // Orders list
+
   return (
     <div className="orders-container">
       <h1>Order History</h1>
@@ -74,6 +82,7 @@ export default function Orders() {
             <div className="order-header">
               <div>
                 <span className="order-number">{order.orderNumber || `Order #${order._id || order.id}`}</span>
+                <span className="order-number">{order.orderNumber || `Order #${order.id}`}</span>
                 <span className="order-date">{order.date}</span>
               </div>
               <span className="order-total">${order.total.toFixed(2)}</span>
@@ -97,6 +106,7 @@ export default function Orders() {
                 <tbody>
                   {order.items.map(item => (
                     <tr key={item._id || item.id}>
+                    <tr key={item.id}>
                       <td>
                         <div className="item-info">
                           <img src={item.image} alt={item.name} className="item-thumb" />
